@@ -3,7 +3,10 @@ Author: XPectuer
 LastEditor: XPectuer
 '''
 
-TERRIAN_SIZE = 6
+TOTAL_EDGE = 5
+TOTAL_BLOCKS = TOTAL_EDGE ** 2
+
+TERRIAN_NUMS = 6
 # terrain 地形：
 # 隐者
 HERMITS=0 
@@ -33,11 +36,19 @@ CLUE_DRYAD = 2
 CLUE_OVERLOOK = 3
 
 
-# direction
+# directions
+NO_DIRECTION=-1
 NORTH=0
-EAST=1
-SOUTH=2
-WEST=3
+NORTH_EAST= 1
+EAST=2
+SOUTH_EAST = 3 
+SOUTH= 4
+SOUTH_WEST = 5
+WEST= 6
+NORTH_WEST = 7
+
+
+
 
 enum_to_str_map = {
     HERMITS:"隐者",
@@ -50,3 +61,5 @@ enum_to_str_map = {
 
 def GetTerrainDesc(terrain):
     return enum_to_str_map[terrain]
+
+

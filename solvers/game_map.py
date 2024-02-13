@@ -2,9 +2,8 @@
 Author: XPectuer
 LastEditor: XPectuer
 '''
-TOTAL_EDGE = 5
-TOTAL_BLOCKS = TOTAL_EDGE ** 2
 
+from consts import TOTAL_EDGE
 """
 initial game map like:
 
