@@ -6,7 +6,7 @@ LastEditor: XPectuer
 
 from consts import *
 import game_map, clue, utils
-# ==========================================================
+
 
 
 def initBudget():
@@ -96,10 +96,11 @@ def compile_hermits(clues_hermits):
 
     def compile_hermit_common(gmap, ghids, car, cdr):
         if not clue.is_direction_hermit(car):
-            k =clue.get_kernel(car)
+            k = clue.get_kernel(car)
+            # hid = 
             for direction, ghid in ghids:
                 # todo
-                
+                pass
                 
                 
 
@@ -127,7 +128,11 @@ def compile_hermits(clues_hermits):
           clue_hermits= chs)
     
     
-def pre_process(clues):
+def breakdown_kernels(clues):
+    """
+    break down multiple kernels in single clue into multiple clues
+    clue([k1,k2], [i1, i2]) ==> [clue([k1], [i1]), clue([k2], [i2])]
+    """
     r = []
     for c in clues:
         t = clue.get_clue_type(c)    
@@ -135,8 +140,11 @@ def pre_process(clues):
         if t == CLUE_HERMIT:
             ks = clue.get_kernel(c)
             hids = clue.get_hermit_hids(c)
+            khs = zip(ks, hids)
+            
             di = clue.get_hermit_direction(c)
-            m = map(lambda x: clue.create_hermit_clue(t, [x], hids, di), ks)
+            m = map(lambda x: clue.create_hermit_clue(t, [x[0]], [x[1]], di), khs)
+            
             r.extend(m)
         else:
             r.append(c)
@@ -151,7 +159,7 @@ normal_clue:
 """
 def solve(budgets, clues):
     validateBudgets(budgets)
-    cluesp = pre_process(clues)
+    cluesp = breakdown_kernels(clues)
     print("CLUESP:", cluesp)
     assert False
     clues_hermits = list(filter(lambda x: clue.get_clue_type(x) == HERMITS, cluesp))
