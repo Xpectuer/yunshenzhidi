@@ -12,12 +12,22 @@
   - 输出把所有解列出来
 - 限制可以修改（DSL？）
 
-# 
-- 线索图标会降低算法的识别效果（识别错误率上升），统一的卡牌形式可以防止顾此失彼
-- 
+## CV Detection
+- [x] 线索图标会降低算法的识别效果（识别错误率上升），统一的卡牌形式可以防止顾此失彼
+- [ ] Detection Mask to Kernel Objects
+
 ## kernel design
 - [(TERRIAN , (x,y)), ...] where x, y are relative coordinate of certain terrian
 
 ## solver
-- search algorithm
+- Backtracking Algorithm
+  - [ ] List All Possible Hermit Layout
+    - [x] common
+      - [ ] Override Hermit Nearby
+      - [ ] Hermit Occupy Empty 
+      - [ ] Contraints to 
+    - [ ] direction
 
+## Verification
+- 
+  - Number of middle result(hermit):

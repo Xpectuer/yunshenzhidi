@@ -9,17 +9,17 @@ TOTAL_BLOCKS = TOTAL_EDGE ** 2
 TERRIAN_NUMS = 6
 # terrain 地形：
 # 隐者
-HERMITS=0 
+HERMITS=1 
 # 森林
-FOREST=1
+FOREST=2
 # 道路
-ROAD=2
+ROAD=3
 # 河流
-RIVER=3
+RIVER=4
 # 村庄
-VILLIAGE=4
+VILLIAGE=5
 # 平原
-PLAINS= 5
+PLAINS= 6
 # 地图外
 OUTER = -1
 # empty
@@ -47,10 +47,7 @@ SOUTH_WEST = 5
 WEST= 6
 NORTH_WEST = 7
 
-
-
-
-enum_to_str_map = {
+terrian_to_str_map = {
     HERMITS:"隐者",
     FOREST:"森林",
     ROAD:"道路",
@@ -59,7 +56,23 @@ enum_to_str_map = {
     PLAINS:"平原"
 }
 
-def GetTerrainDesc(terrain):
-    return enum_to_str_map[terrain]
+direction_to_str_map  = {
+    NO_DIRECTION: '无方向',
+    NORTH: '北',
+    NORTH_EAST: '东北',
+    EAST: '东',
+    SOUTH_EAST: '东南',
+    SOUTH: '南',
+    SOUTH_WEST: '西南',
+    WEST: '西',
+    NORTH_WEST: '西北'
+}
+
+
+def GetTerrainDesc(terrain: int):
+    return terrian_to_str_map[terrain]
+
+def GetDirectionDesc(direction: int) -> str:
+    return direction_to_str_map[direction]    
 
 
