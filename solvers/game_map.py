@@ -4,7 +4,22 @@ LastEditor: XPectuer
 '''
 
 from consts import *
-import budget
+import budget, utils
+
+def init_direction_interval_map():
+    """
+    (row_range, col_range)
+    """
+    n = TOTAL_EDGE
+    return {
+        NORTH_EAST:((0,2),(n-2, n)),
+        SOUTH_EAST :((n-2,n),(n-2,n)),
+        SOUTH_WEST :((n-2,n),(0,2)),
+        NORTH_WEST :((0,2),(0,2))
+    }
+    
+hermit_sections = init_direction_interval_map()
+
 """
 initial game map like:
 
@@ -45,23 +60,41 @@ def set_block(game_map, i, j ,v):
 
 def clear_block(game_map, i, j): set_block(game_map, i, j, EMPTY)
 
+
 def check_and_set_block(game_map, budgets, i, j , terrian) -> bool: 
-    succ = validate_index(i, j) 
-    avai = get_block(game_map, i, j) == EMPTY 
-    isOverride = get_block(game_map, i, j) == terrian
-    
-    if succ:
+    if terrian == OUTER:
+        return set_outer(i,j)
+    elif terrian == HERMITS:
+        inHermit = False
+        for _, section in hermit_sections.items():
+            inHermit = inHermit or utils.coor_in((i,j), section)
+            
+        return inHermit and set_inner(game_map, budgets, i, j , terrian)
+    else:
+        return set_inner(game_map, budgets, i, j , terrian)
+
+
+def set_inner(game_map, budgets, i, j , terrian) -> bool:
+    inBound = validate_index(i, j) 
+
+    if inBound:
+        avai = get_block(game_map, i, j) == EMPTY 
+        isOverride = get_block(game_map, i, j) == terrian
         if isOverride:    
             return True
         elif avai:
-            
-            game_map[i+1][j+1] = terrian
+            set_block(game_map, i, j , terrian)
             # budget > 0
             return budget.consumeBudget(budgets, terrian)
-        
     else:
         return False
-    
+
+def set_outer(i, j) -> bool:
+    inBound = validate_index(i, j) 
+    if not inBound:
+        return True
+    else:
+        return False
     
 # def set_block(game_map, coor , v): 
 #     i = coor[0]

@@ -28,6 +28,9 @@ def traverse_interval_2d(f, interval):
         for y in range(*y_coor):
             f(x,y)
 
+def coor_in(coor, _range):
+    return coor[0] in range(*_range[0]) and coor[1] in range(*_range[1])
+
 def saveState(gmap, budgets):
     return (game_map.copy_gmap(gmap), budget.copyBudget(budgets))
     

@@ -10,19 +10,7 @@ import copy, budget
 
 
 
-def init_direction_interval_map():
-    """
-    (row_range, col_range)
-    """
-    n = TOTAL_EDGE
-    return {
-        NORTH_EAST:((0,2),(n-2, n)),
-        SOUTH_EAST :((n-2,n),(n-2,n)),
-        SOUTH_WEST :((n-2,n),(0,2)),
-        NORTH_WEST :((0,2),(0,2))
-    }
-    
-hermit_sections = init_direction_interval_map()
+
 
 def set_hermit_id(hids, direction, id):
     hids[direction] = id
@@ -47,7 +35,7 @@ def compile_hermits(clues_hermits, budgets):
         if clue.is_direction_hermit(car):
             hids = clue.get_hermit_hids(car)
             direction = clue.get_hermit_direction(car)
-            interval = hermit_sections[direction]
+            interval = game_map.hermit_sections[direction]
             x_range = interval[0]
             y_range = interval[1]
             hid = hids[0]
@@ -87,7 +75,7 @@ def compile_hermits(clues_hermits, budgets):
             for direction, id in ghids.items():
                 old = game_map.copy_gmap(gmap)
                 oldB = budget.copyBudget(budgets)
-                interval = hermit_sections[direction]
+                interval = game_map.hermit_sections[direction]
                 if curr_hid  == id:
                     # base coordinate
                     h_bases = game_map.search_interval(gmap, HERMITS, interval)
@@ -243,7 +231,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
     def opt_hermit(gmap, ghids, budgets, car, cdr, results):
         for dire , ghid in ghids.items():
             if ghid != EMPTY:
-                interval = hermit_sections[dire]
+                interval = game_map.hermit_sections[dire]
                 option_hermit_pos = game_map.search_interval(gmap, HERMITS, interval)
                 
                 assert len(option_hermit_pos) == 1
@@ -265,6 +253,8 @@ def compile_others(gmap, hids, budgets, clues_rest):
         assert len(ks) == 1
         k = ks[0]
         base, offsets = clue.get_kernel_offsets(k)
+        
+        # enumerate including outer edge
         for x, row in enumerate(gmap):
                 for y, t in enumerate(row):
                     if t == EMPTY or t == clue.get_terrain_type(base):
@@ -374,7 +364,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
                     
                 else:
                     place_common_clue(gmap, ghids, budgets, car, cdr, results)
-              
+                    
             
             
             
@@ -527,6 +517,104 @@ def test2():
     dclue = clue.create_clue(CLUE_DRYAD, 
                              kernel= [k_dryad])
     
+    #    4
+    # -1 2 6
+    #    3
+    k_dryad1 = clue.create_kernel((OUTER, (1,0)),
+                                 (RIVER,(0,1)),
+                                 (PLAINS,(1,2)),
+                                 (FOREST,(1,1)),
+                                 (ROAD, (2,1)))
+
+    dclue1 = clue.create_clue(CLUE_DRYAD, 
+                             kernel= [k_dryad1])
+    
+    
+    
+
+    
+    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, dclue1])
+
+def test3():
+    my_game_map = game_map.init_game_map()
+    print(game_map.string(my_game_map))
+    budgets = budget.initBudget()
+    print("budget: ", budgets)
+    
+    k1 = clue.create_kernel((HERMITS, (0,0)),
+                            (ROAD, (1,0)))
+    
+    k2 = clue.create_kernel((FOREST, (0,0)),
+                            (HERMITS, (0,1)))
+    
+    k3 = clue.create_kernel((HERMITS, (0,0)),
+                            (RIVER,(1,0)))
+    
+    k4 = clue.create_kernel((HERMITS, (0,0)),
+                            (VILLIAGE, (1,0)))
+    
+    k5 = clue.create_kernel((FOREST, (0,0)),
+                            (HERMITS, (1,0)))
+    
+    
+    hclue =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [k1,k2],
+                              hIds= [1, 4],
+                              direction= NO_DIRECTION)
+    
+    hclue1 =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [k3,k4],
+                              hIds= [2, 3],
+                              direction= NO_DIRECTION)
+    
+    hclue2 =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [k5],
+                              hIds= [2],
+                              direction= NO_DIRECTION)
+    
+    
+    """
+    隐者2号在东北
+    """
+    hclue3 =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [],
+                              hIds= [2],
+                              direction= NORTH_EAST)
+    
+    k_bird = clue.create_kernel((HERMITS, (0,0)),
+                                 (RIVER,(0,1)),
+                                 (PLAINS,(1,0)),
+                                 (FOREST,(1,1)))
+
+    cclue = clue.create_clue(CLUE_BIRD, 
+                             kernel= [k_bird])
+    
+    
+    #   4
+    # 1 2 6
+    #   3
+    k_dryad = clue.create_kernel((HERMITS, (1,0)),
+                                 (RIVER,(0,1)),
+                                 (PLAINS,(1,2)),
+                                 (FOREST,(1,1)),
+                                 (ROAD, (2,1)))
+
+    dclue = clue.create_clue(CLUE_DRYAD, 
+                             kernel= [k_dryad])
+    
+    #    4
+    # -1 2 6
+    #    3
+    k_dryad = clue.create_kernel((OUTER, (1,0)),
+                                 (RIVER,(0,1)),
+                                 (PLAINS,(1,2)),
+                                 (FOREST,(1,1)),
+                                 (ROAD, (2,1)))
+
+    dclue1 = clue.create_clue(CLUE_DRYAD, 
+                             kernel= [k_dryad])
+    
+    
     
     #   4
     # 1 2 6
@@ -535,12 +623,14 @@ def test2():
                                  (RIVER,(1,0)),
                                  (RIVER,(2,0)),
                                  (FOREST,(3,0)))
+    
     oclue = clue.create_clue(CLUE_OVERLOOK, 
-                             kernel= [k_overlook])
+                             kernel= [k_overlook], 
+                             direction=SOUTH)
     
     
     
-    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, oclue])
+    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, dclue1, oclue])
 
 
 if __name__ == '__main__':

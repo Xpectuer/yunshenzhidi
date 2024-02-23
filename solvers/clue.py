@@ -3,8 +3,7 @@ Author: XPectuer
 LastEditor: XPectuer
 '''
 from consts import *
-import utils, game_map, budget
-
+import utils, game_map
 
 
 def filter_hermits(clues):
@@ -12,11 +11,7 @@ def filter_hermits(clues):
 
 def create_hermit_clue(clue_type, kernel, hIds, direction):
     assert clue_type == CLUE_HERMIT
-
-    return (clue_type,
-            kernel, 
-            hIds,
-            direction)
+    return (clue_type, kernel, hIds, direction)
 
 def get_hermit_hids(hermit_clue):
     assert get_clue_type(hermit_clue) == CLUE_HERMIT
@@ -64,6 +59,7 @@ def set_hermit_nearby(gmap, budgets, h_base, offsets) -> bool:
                                                absolute_coor[0],
                                                absolute_coor[1],
                                                terrain_type)
+        
         if not success:
             return False
         
@@ -78,7 +74,6 @@ def set_kernel(gmap, budgets, abs_base, base, offsets) -> bool:
                                             abs_base[1],
                                             base_type)
     if not success:
-     
         return False
         
     for t_offst in offsets:
@@ -110,9 +105,7 @@ def search_hermit_from_clue(kernel) -> list[tuple]:
     # option unpack
     assert len(hermit_idxs) <= 1
     return hermit_idxs
-        
-        
-        
+
 
 def get_bird_alternative(clue_bird):
     ks = get_kernels(clue_bird)
@@ -191,13 +184,6 @@ def get_drayd_rot_default(clue_dryad) :
     
     return r
 
-def get_overlook_placed_default(clue_dryad):
-    assert get_clue_type(clue_dryad) == CLUE_OVERLOOK
-    ks = get_kernels(clue_dryad)
-    
-    r = create_clue(CLUE_OVERLOOK, kernel=ks)
-    
-    return r
 
 
 def get_dryad_alternatives(clue_dryad) -> list:
@@ -214,23 +200,9 @@ def get_dryad_alternatives(clue_dryad) -> list:
     return r
     
 def kernel_has_terrain(kernel, terrain):
-    n = filter(lambda t: get_terrain_type(t) == terrain, kernel)
-    return n > 0
+    res = list(filter(lambda t: get_terrain_type(t) == terrain, kernel))
+    return len(res) > 0
 
-# todo
-def get_overlook_alternatives(car) -> list:
-    ks = get_kernels(car)
-    assert len(ks) == 1
-    k = ks[0]
-    n_terrains = len(k)
-    if kernel_has_terrain(kernel, FOREST):
-        if n_terrains == TOTAL_EDGE:
-            return get_overlook_placed_default(car)
-        elif n_terrains == TOTAL_EDGE - 1:
-            pass
-        
-        
-        
 
 def create_dryad_clue(clue_type, kernel):
     assert clue_type == CLUE_DRYAD or clue_type == CLUE_DRYAD_ROT
@@ -241,6 +213,56 @@ def create_overlook_clue(clue_type, kernel, direction):
     assert clue_type == CLUE_OVERLOOK or clue_type == CLUE_OVERLOOK_PLACED
     
     return (clue_type, kernel, direction)
+
+def get_overlook_direction(overlook_clue):
+    return overlook_clue[2]
+
+def get_overlook_placed_default(clue_dryad):
+    assert get_clue_type(clue_dryad) == CLUE_OVERLOOK
+    ks = get_kernels(clue_dryad)
+    dire = get_overlook_direction(clue_dryad)
+    
+    r = create_clue(CLUE_OVERLOOK, kernel=ks, direction=dire)
+    
+    return r
+
+def place_overlook_by_direction(overlook_clue):
+    dire = get_overlook_direction(overlook_clue)
+    m = init_align_map()
+    align_fun = m[dire]
+    
+    k = get_kernel_or_fail(overlook_clue)
+    
+    kp = align_fun(k)
+    
+    return create_clue(CLUE_OVERLOOK_PLACED, kernel=[kp], direction=dire)
+    
+# todo:
+def place_overlook_with_hermit(overlook_clue):
+    dire = get_overlook_direction(overlook_clue)
+    k = get_kernel_or_fail(overlook_clue)
+    
+    
+
+
+
+def get_overlook_alternatives(overlook_clue) -> list:
+    ks = get_kernels(overlook_clue)
+    assert len(ks) == 1
+    k = ks[0]
+    n_terrains = len(k)
+
+    if n_terrains == TOTAL_EDGE:
+        return get_overlook_placed_default(overlook_clue)
+    elif n_terrains < TOTAL_EDGE:
+        r = []
+        # NO HERMITS
+        r1 = place_overlook_by_direction(overlook_clue)
+        r.append(r1)
+        
+        # WITH HERMITS
+        r2s = place_overlook_with_hermit(overlook_clue)
+          
 
 
 def create_clue(clue_type, **kwargs):
@@ -261,6 +283,12 @@ def get_clue_type(clue):
 
 def get_kernels(clue):
     return clue[1]
+
+def get_kernel_or_fail(clue):
+    ks = get_kernels(clue)
+    assert len(ks) == 1
+    k = k[0]
+    return k
 
 def create_kernel(k1, *args):
     return [k1] + list(args)
@@ -291,14 +319,115 @@ def get_kernel_offsets(kernel: list[tuple]):
     
     return create_terrian(base_terrian_type, (-1, -1)), ret
 
+
+def kernel_horizontal_insert(kernel, pos) -> list:
+    
+    nk = []
+    for t in kernel[pos:]:
+        old_coor = get_terrain_coor(t)
+        new_coor = (old_coor[0], old_coor[1] +1)
+        nt = set_terrian_coor(t, new_coor)
+        nk.append(nt)
+    
+    return kernel[:pos] + [pos] + nk
+    
+    
+
+def kernel_vertical_insert(kernel, pos) -> list:
+    nk = []
+    for t in kernel[pos:]:
+        old_coor = get_terrain_coor(t)
+        new_coor = (old_coor[0] + 1, old_coor[1])
+        nt = set_terrian_coor(t, new_coor)
+        nk.append(nt)
+    
+    return kernel[:pos] + [pos] + nk
+    
+    
+
+def kernel_down_align(kernel, upper_bound=TOTAL_EDGE):
+    n_k = len(kernel)
+    r = []
+    
+    for cnt in range(upper_bound - n_k):
+        r.append(empty_terrian((cnt, 0)))
+    
+    for t in kernel:
+        old_coor = get_terrain_coor(t)
+        new_coor = (old_coor[0] + cnt, old_coor[1])
+        r.append(create_terrian(t, new_coor))
+        
+    return create_kernel(*r)
+
+
+def kernel_upper_align(kernel, upper_bound=TOTAL_EDGE):
+    n_k = len(kernel)
+    r = []
+    
+    r.extend(kernel)
+    offset =  n_k
+    assert offset <= upper_bound
+    for i in range(offset, upper_bound):
+        r.append(empty_terrian((i, 0)))
+        
+    return create_kernel(*r)
+
+
+def kernel_left_align(kernel, upper_bound=TOTAL_EDGE):
+    n_k = len(kernel)
+    r = []
+    
+    r.extend(kernel)
+    offset =  n_k
+    assert offset <= upper_bound
+    for i in range(offset, upper_bound):
+        r.append(empty_terrian((0, i)))
+        
+    return create_kernel(*r)
+
+
+# right
+def kernel_right_align(kernel, upper_bound=TOTAL_EDGE):
+    n_k = len(kernel)
+    r = []
+    
+    for cnt in range(upper_bound - n_k):
+        r.append(empty_terrian((0, cnt)))
+    
+    for t in kernel:
+        old_coor = get_terrain_coor(t)
+        new_coor = (old_coor[0] , old_coor[1]+ cnt)
+        r.append(create_terrian(t, new_coor))
+        
+    return create_kernel(*r)
+
+def init_align_map():
+    return   {
+        NORTH: kernel_down_align,
+        EAST: kernel_left_align,
+        SOUTH: kernel_upper_align,
+        WEST: kernel_right_align,    
+    }
+
+
 def get_terrain_type(terrian) -> int:
     return terrian[0]
 
 def get_terrain_coor(terrain) -> tuple:
     return terrain[1]
 
+def set_terrian_coor(terrain, coor) -> tuple:
+    _type = get_terrain_type(terrain)
+    
+    return create_terrian(_type, coor)
+    
+    
+
 def create_terrian(ttype, coor) -> tuple:
     return (ttype, coor)
+
+def empty_terrian(coor) -> tuple:
+    return (EMPTY, coor)
 
 if __name__ == '__main__':
     overlook = create_clue(CLUE_OVERLOOK, kernel= [[FOREST],[PLAINS],[VILLIAGE],[RIVER]], direction=NORTH)
@@ -309,9 +438,34 @@ if __name__ == '__main__':
     print(overlook)
     print(dryad)
     
-    kernel = [
-    [0,1,0],
-    [3,2,5],
-    [0,4,0],
-    ]
+    # kernel = [
+    # [0,1,0],
+    # [3,2,5],
+    # [0,4,0],
+    # ]
 
+    # l = [(1, 2),(3,4)]
+    # k = create_kernel(*l)
+    # print(k)
+    
+    k_overlook = create_kernel((PLAINS, (0,0)),
+                                 (RIVER,(1,0)),
+                                 (RIVER,(2,0)),
+                                 (FOREST,(3,0)))
+    
+    
+    print(kernel_upper_align(k_overlook))
+    print(kernel_down_align(k_overlook))
+    
+    k_overlook1 = create_kernel((PLAINS, (0,1)),
+                                 (RIVER,(0,2)),
+                                 (RIVER,(0,3)),
+                                 (FOREST,(0,4)))
+    
+    
+    print(kernel_left_align(k_overlook))
+    print(kernel_right_align(k_overlook))
+    
+
+    
+    
