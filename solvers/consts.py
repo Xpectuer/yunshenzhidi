@@ -35,6 +35,16 @@ CLUE_DRYAD = 2
 # 极目
 CLUE_OVERLOOK = 3
 
+# 树灵，旋转后
+CLUE_DRYAD_ROT = 4
+# 极目，放置隐者后
+CLUE_OVERLOOK_PLACED = 5
+
+# set 
+
+SET_SUCC = 0
+SET_SAME = 1
+SET_FAIL = 2
 
 # directions
 NO_DIRECTION=-1

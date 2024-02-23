@@ -4,6 +4,7 @@ LastEditor: XPectuer
 '''
 
 from consts import *
+import budget
 """
 initial game map like:
 
@@ -44,13 +45,20 @@ def set_block(game_map, i, j ,v):
 
 def clear_block(game_map, i, j): set_block(game_map, i, j, EMPTY)
 
-def check_and_set_block(game_map, i, j , v) -> bool: 
-    succ = validate_index(i, j) and \
-        get_block(game_map, i, j) == EMPTY
+def check_and_set_block(game_map, budgets, i, j , terrian) -> bool: 
+    succ = validate_index(i, j) 
+    avai = get_block(game_map, i, j) == EMPTY 
+    isOverride = get_block(game_map, i, j) == terrian
     
     if succ:
-        game_map[i+1][j+1] = v
-        return True
+        if isOverride:    
+            return True
+        elif avai:
+            
+            game_map[i+1][j+1] = terrian
+            # budget > 0
+            return budget.consumeBudget(budgets, terrian)
+        
     else:
         return False
     
@@ -64,10 +72,15 @@ def check_and_set_block(game_map, i, j , v) -> bool:
 def inbound(i, j):
     return validate_index(i,j) 
 
+def copy_gmap(gmap)->list[list]:
+    return [x[:] for x in gmap]
+
 # def set_block_relative(game_map, base, relative_coor, v):
 #     i = base[0] + relative_coor[0]
 #     j = base[1] + relative_coor[1]
 #     set_block(game_map, i, j, v)
+
+
 
 def init_hermit_ids():
     return {
@@ -82,10 +95,12 @@ def set_hermit_id(hids, direction, id):
     
 def get_hermit_id(hids, direction):
     return hids[direction]
-    
+
+def is_hermit_id_empty(hids, direction):
+    return get_hermit_id(hids, direction) == EMPTY
     
 
-def search_interval(game_map, terrain, interval):
+def search_interval(game_map, terrain, interval) -> list[tuple]:
     int_x = interval[0]
     int_y = interval[1]
     r = []

@@ -1,8 +1,9 @@
 import itertools
-
 import game_map
 from consts import *
-def pick_elements(collection, N):
+import budget
+
+def binon(collection, N):
     # Get all combinations of size N
     combinations = list(itertools.combinations(collection, N))
     return combinations
@@ -14,7 +15,7 @@ def flatten(iterable):
     return flatMap(lambda x: x, iterable)
 
 def coor_diff(a, b):
-    print(a,b)
+    # print(a,b)
     return (a[0]- b[0], a[1]- b[1])
 
 def coor_add(a,b):
@@ -27,16 +28,28 @@ def traverse_interval_2d(f, interval):
         for y in range(*y_coor):
             f(x,y)
 
+def saveState(gmap, budgets):
+    return (game_map.copy_gmap(gmap), budget.copyBudget(budgets))
+    
+
+# def restoreState(gmap, oldMap, budgets, oldB):
+#     oldMap
+#     budgets = oldB
+
 """
 undo_stack: [(0,0), (2,3), ...]
 """
-def undo(gmap, undo_stack: list[tuple]):
-    for _ in range(len(undo_stack)):
-        op = undo_stack.pop()
-        x,y = op[0],op[1]
-        game_map.clear_block(gmap, x, y)
+# def undo(gmap,budgets, undo_stack: list[tuple]):
+#     for _ in range(len(undo_stack)):
+#         op = undo_stack.pop()
+#         x,y = op[0],op[1]
         
-    assert undo_stack == []
+#         terrain = game_map.get_block(gmap, x, y)
+#         budget.restoreBudgets(budgets, terrain)
+        
+#         game_map.clear_block(gmap, x, y)
+        
+#     assert undo_stack == []
         
         
 def die(gmap):
