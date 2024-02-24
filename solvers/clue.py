@@ -238,14 +238,67 @@ def place_overlook_by_direction(overlook_clue):
     return create_clue(CLUE_OVERLOOK_PLACED, kernel=[kp], direction=dire)
     
 # todo:
-def place_overlook_with_hermit(overlook_clue):
+def reveal_possible_hermits(overlook_clue) -> list:
+    
     dire = get_overlook_direction(overlook_clue)
     k = get_kernel_or_fail(overlook_clue)
+    n_k = len(k)
+    assert n_k < TOTAL_EDGE
     
     
+    m = init_align_map()
+    align_fun = m[dire]
+    
+    res = []
+    
+    
+    # ->
+    if dire in {SOUTH, EAST}:
+        if n_k == 1:
+            idxs = [0]
+            if dire == SOUTH:
+                for idx in idxs:
+                    res = kernel_vertical_insert(k, idx, HERMITS)
+            elif dire == EAST:
+                for idx in idxs:
+                    res = kernel_horizontal_insert(k, idx, HERMITS)
+            return res
 
+        if n_k == 2:
+            idxs = [0,1]
+            if dire == SOUTH:
+                for idx in idxs:
+                    res = kernel_vertical_insert(k, idx, HERMITS)
+            elif dire == EAST:
+                for idx in idxs:
+                    res = kernel_horizontal_insert(k, idx, HERMITS)
+            return res
+    
+    # <-
+    elif dire in {NORTH, WEST}:
+        if n_k == 1:
+            # last position
+            idxs = [TOTAL_BLOCKS]
+            if dire == SOUTH:
+                for idx in idxs:
+                    res = kernel_vertical_insert(k, idx, HERMITS)
+            elif dire == EAST:
+                for idx in idxs:
+                    res = kernel_horizontal_insert(k, idx, HERMITS)
+        return res 
 
-
+        if n_k == 2:
+            pass
+    
+    
+    # todo: induction       
+        
+    
+    
+    return res
+        
+        
+    
 def get_overlook_alternatives(overlook_clue) -> list:
     ks = get_kernels(overlook_clue)
     assert len(ks) == 1
@@ -256,13 +309,19 @@ def get_overlook_alternatives(overlook_clue) -> list:
         return get_overlook_placed_default(overlook_clue)
     elif n_terrains < TOTAL_EDGE:
         r = []
-        # NO HERMITS
-        r1 = place_overlook_by_direction(overlook_clue)
-        r.append(r1)
+        # WITH FOREST
+        if kernel_has_terrain(k, FOREST):
+            r1 = place_overlook_by_direction(overlook_clue)
+            r.append(r1)
+            
+            
+            r2s = reveal_possible_hermits(overlook_clue)
+            r.extend(r2s)
+        else:
+            # NO FORESTS
+            pass
         
-        # WITH HERMITS
-        r2s = place_overlook_with_hermit(overlook_clue)
-          
+        return r
 
 
 def create_clue(clue_type, **kwargs):
@@ -271,7 +330,7 @@ def create_clue(clue_type, **kwargs):
     elif clue_type == CLUE_BIRD :
         return create_bird_clue(clue_type, kwargs['kernel'])
     elif clue_type == CLUE_DRYAD or clue_type == CLUE_DRYAD_ROT:
-        print("clue_type", clue_type, "deadbeef:", kwargs)
+        # print("clue_type", clue_type, "deadbeef:", kwargs)
         return create_dryad_clue(clue_type, kwargs['kernel'])
     elif clue_type == CLUE_OVERLOOK or clue_type == CLUE_OVERLOOK_PLACED:
         return create_overlook_clue(clue_type, kwargs['kernel'], kwargs['direction'])
@@ -320,7 +379,7 @@ def get_kernel_offsets(kernel: list[tuple]):
     return create_terrian(base_terrian_type, (-1, -1)), ret
 
 
-def kernel_horizontal_insert(kernel, pos) -> list:
+def kernel_horizontal_insert(kernel, pos, terrain) -> list:
     
     nk = []
     for t in kernel[pos:]:
@@ -329,11 +388,12 @@ def kernel_horizontal_insert(kernel, pos) -> list:
         nt = set_terrian_coor(t, new_coor)
         nk.append(nt)
     
-    return kernel[:pos] + [pos] + nk
+    t = create_terrian(terrain, (0, pos))
+    return kernel[:pos] + [t] + nk
     
     
 
-def kernel_vertical_insert(kernel, pos) -> list:
+def kernel_vertical_insert(kernel, pos, terrain) -> list:
     nk = []
     for t in kernel[pos:]:
         old_coor = get_terrain_coor(t)
@@ -341,7 +401,8 @@ def kernel_vertical_insert(kernel, pos) -> list:
         nt = set_terrian_coor(t, new_coor)
         nk.append(nt)
     
-    return kernel[:pos] + [pos] + nk
+    t = create_terrian(terrain, (pos, 0))
+    return kernel[:pos] + [t] + nk
     
     
 

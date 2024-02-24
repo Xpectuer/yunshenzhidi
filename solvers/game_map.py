@@ -68,7 +68,6 @@ def check_and_set_block(game_map, budgets, i, j , terrian) -> bool:
         inHermit = False
         for _, section in hermit_sections.items():
             inHermit = inHermit or utils.coor_in((i,j), section)
-            
         return inHermit and set_inner(game_map, budgets, i, j , terrian)
     else:
         return set_inner(game_map, budgets, i, j , terrian)

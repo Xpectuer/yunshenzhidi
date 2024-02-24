@@ -33,8 +33,30 @@ def coor_in(coor, _range):
 
 def saveState(gmap, budgets):
     return (game_map.copy_gmap(gmap), budget.copyBudget(budgets))
-    
 
+def get_combine_from_range(lower_bound, upper_bound):
+    ret = []
+    assert lower_bound < upper_bound
+    for l in range(lower_bound, upper_bound):
+        for r in range(l+1, upper_bound):
+            ret.append((l,r))
+        
+    return ret
+
+def filter_range(_ranges: list[tuple], *constraints):
+    """
+    constraints: ((x0, x1),(y0, y1))
+    """
+    t = _ranges
+    for constraint in constraints:
+        sat = []
+        low, high = constraint
+        for _range in t:
+            x , y = _range
+            if x in range(*low) and y in range(*high):
+                sat.append(_range)
+            t = sat
+    return t
 # def restoreState(gmap, oldMap, budgets, oldB):
 #     oldMap
 #     budgets = oldB
@@ -59,3 +81,18 @@ def die(gmap):
     print("Result: UNSAT.")
     print(f"Caused By {game_map.string(gmap)}")
     exit(-1)
+    
+    
+if __name__ == '__main__':
+    t = get_combine_from_range(3,5)
+    print(t)
+    x1 = filter_range(t, ((2,4),(4,5)))
+    
+    x2 = filter_range(t, ((0,2),(4,5)))
+    
+    print(x1, x2)
+    
+    
+    
+    
+    

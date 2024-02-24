@@ -355,6 +355,9 @@ def compile_others(gmap, hids, budgets, clues_rest):
                     # print("ALTER:", alter) 
             
             elif _type == CLUE_OVERLOOK_PLACED:
+                """
+                palced: whole row or column (5 lengths)
+                """
                 if clue.kernel_has_hermit(k):
                     old = game_map.copy_gmap(gmap)
                     oldB = budget.copyBudget(budgets)
@@ -421,6 +424,9 @@ Display Result
 results: list
 """
 def show_results(results:list[tuple]):
+    if results == []:
+        print("UNSAT.")
+    
     for cnt, res in enumerate(results):
         print(f"Result ({cnt})")
         gmap = res[0]
@@ -429,6 +435,7 @@ def show_results(results:list[tuple]):
         print(f"Hermits Layout(0 For Empty Space):\n{game_map.string_hermit_layout(h_layout)}")
         print(f"Budgets Rest: \n{res[2]}")
         print()
+    
         
 
 
@@ -630,7 +637,7 @@ def test3():
     
     
     
-    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, dclue1, oclue])
+    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, dclue1, oclue, k_overlook])
 
 
 if __name__ == '__main__':
