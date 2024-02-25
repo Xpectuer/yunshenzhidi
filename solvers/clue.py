@@ -236,8 +236,10 @@ def place_overlook_by_direction(overlook_clue):
     kp = align_fun(k)
     
     return create_clue(CLUE_OVERLOOK_PLACED, kernel=[kp], direction=dire)
+
+
     
-# todo:
+# todo: refacor
 def reveal_possible_hermits(overlook_clue) -> list:
     
     dire = get_overlook_direction(overlook_clue)
@@ -248,7 +250,7 @@ def reveal_possible_hermits(overlook_clue) -> list:
     
     m = init_align_map()
     align_fun = m[dire]
-    
+    insert_fun = init_insert_fun(dire)
     res = []
     
     
@@ -256,46 +258,83 @@ def reveal_possible_hermits(overlook_clue) -> list:
     if dire in {SOUTH, EAST}:
         if n_k == 1:
             idxs = [0]
-            if dire == SOUTH:
-                for idx in idxs:
-                    res = kernel_vertical_insert(k, idx, HERMITS)
-            elif dire == EAST:
-                for idx in idxs:
-                    res = kernel_horizontal_insert(k, idx, HERMITS)
-            return res
+            for idx in idxs:
+                res.append(insert_fun(k, idx, HERMITS))
+        
 
         if n_k == 2:
+            idxs = [0, 1]
+            
+            for idx in idxs:
+                res.append(kernel_vertical_insert(k, idx, HERMITS))
+            
+        
+        if n_k == 3:
             idxs = [0,1]
-            if dire == SOUTH:
-                for idx in idxs:
-                    res = kernel_vertical_insert(k, idx, HERMITS)
-            elif dire == EAST:
-                for idx in idxs:
-                    res = kernel_horizontal_insert(k, idx, HERMITS)
-            return res
+
+            for i in idxs:
+                res.append(insert_fun(k, i, HERMITS))
+            for r in res:
+                
+                cr = copy_kernel(r)
+                ncr = len(cr)
+                idx1 = [ncr -1]
+                for j in idx1:
+                    res.append(insert_fun(cr, j, HERMITS))
+          
+        
+        
+        if n_k == 4:
+            idxs = [0, 1, n_k-1]
+            
+            for i in idxs:
+                res.append(insert_fun(k, i, HERMITS))       
+                        
+
     
     # <-
     elif dire in {NORTH, WEST}:
         if n_k == 1:
             # last position
-            idxs = [TOTAL_BLOCKS]
-            if dire == SOUTH:
-                for idx in idxs:
-                    res = kernel_vertical_insert(k, idx, HERMITS)
-            elif dire == EAST:
-                for idx in idxs:
-                    res = kernel_horizontal_insert(k, idx, HERMITS)
-        return res 
+            idxs = [n_k]
+         
+            for idx in idxs:
+                res.append(insert_fun(k, idx, HERMITS))
+         
 
         if n_k == 2:
-            pass
-    
-    
-    # todo: induction       
+            idxs = [n_k, n_k - 1]
+            for idx in idxs:
+                res.append(insert_fun(k, idx, HERMITS))
+            
         
+        if n_k == 3:
+            idxs = [n_k, n_k - 1]
+            
+            for i in idxs:
+                res.append(insert_fun(k, i, HERMITS))
+            for r in res:
+                
+                cr = copy_kernel(r)
+                ncr = len(cr)
+                idx1 = [1]
+                for j in idx1:
+                    res.append(insert_fun(cr, j, HERMITS))
+                        
+            
+        
+        if n_k == 4:
+            idxs = [n_k, n_k-1, 1]
+            if dire == NORTH:
+                for i in idxs:
+                    res.append(kernel_vertical_insert(k, i, HERMITS))       
+                        
+            
+    
+   
     
     
-    return res
+    return list(map(lambda x: align_fun(x), res))
         
         
     
@@ -304,6 +343,9 @@ def get_overlook_alternatives(overlook_clue) -> list:
     assert len(ks) == 1
     k = ks[0]
     n_terrains = len(k)
+    
+    align_fun = init_align_map()
+    insert_fun = init_insert_fun()
 
     if n_terrains == TOTAL_EDGE:
         return get_overlook_placed_default(overlook_clue)
@@ -311,6 +353,7 @@ def get_overlook_alternatives(overlook_clue) -> list:
         r = []
         # WITH FOREST
         if kernel_has_terrain(k, FOREST):
+            # NO HERMITS
             r1 = place_overlook_by_direction(overlook_clue)
             r.append(r1)
             
@@ -319,7 +362,17 @@ def get_overlook_alternatives(overlook_clue) -> list:
             r.extend(r2s)
         else:
             # NO FORESTS
-            pass
+            # MUST HAVE HERMIT
+            # n = 3 ==> 1 hermits
+            # n = 4 ==> 2 hermits
+            assert n_terrains == 3 or n_terrains == 4
+            if n_terrains == 3:
+                idx 
+            elif n_terrains == 4:
+                idxs = [0, 1, 3, 4]
+                for idx in idxs:
+                    r.append(align_fun(insert_fun(k, idx, HERMITS)))
+            
         
         return r
 
@@ -393,7 +446,7 @@ def kernel_horizontal_insert(kernel, pos, terrain) -> list:
     
     
 
-def kernel_vertical_insert(kernel, pos, terrain) -> list:
+def kernel_vertical_insert(kernel, pos, terrain):
     nk = []
     for t in kernel[pos:]:
         old_coor = get_terrain_coor(t)
@@ -401,8 +454,8 @@ def kernel_vertical_insert(kernel, pos, terrain) -> list:
         nt = set_terrian_coor(t, new_coor)
         nk.append(nt)
     
-    t = create_terrian(terrain, (pos, 0))
-    return kernel[:pos] + [t] + nk
+    newt = create_terrian(terrain, (pos, 0))
+    return kernel[:pos] + [newt] + nk
     
     
 
@@ -470,6 +523,13 @@ def init_align_map():
         WEST: kernel_right_align,    
     }
 
+def init_insert_fun(dire):
+    if dire in {SOUTH, NORTH}:
+        return kernel_vertical_insert
+    elif dire in {EAST, WEST}:
+        return kernel_horizontal_insert
+    else:
+        assert False
 
 def get_terrain_type(terrian) -> int:
     return terrian[0]
