@@ -9,9 +9,6 @@ import game_map, clue, utils
 import copy, budget
 
 
-
-
-
 def set_hermit_id(hids, direction, id):
     hids[direction] = id
 
@@ -21,7 +18,7 @@ def get_hermit_id(hids, direction):
 
 def isBudEmpty(budget):
     return sum(budget) == 0
-    
+
 def compile_hermits(clues_hermits, budgets):
     """
     A function \f that takes hermit_clues
@@ -49,6 +46,7 @@ def compile_hermits(clues_hermits, budgets):
             
                 for x in range(*x_range):
                     for y in range(*y_range):
+                       
                         succ = game_map.check_and_set_block(gmap, budgets, x, y, HERMITS)
                         # undo_stack.append((x,y))
                         if succ:
@@ -98,8 +96,6 @@ def compile_hermits(clues_hermits, budgets):
                     x_coor = interval[0]
                     y_coor = interval[1]
                     
-                    
-                    
                     for x in range(*x_coor):
                         for y in range(*y_coor):
                             old = game_map.copy_gmap(gmap)
@@ -126,14 +122,10 @@ def compile_hermits(clues_hermits, budgets):
                                 # print(game_map.string(gmap))
                                 # undo game map hermit id
                                 game_map.set_hermit_id(ghids, direction, EMPTY)
-                            
+                           
                             gmap = old
                             budgets = oldB
                     
-
-            # if hid in ghids.values():
-            #     interval = hermit_sections[]
-            #     = search_inteval(gmap, interval)
                     
     
                 
@@ -261,7 +253,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
                         old = game_map.copy_gmap(gmap)
                         oldB = budget.copyBudget(budgets)
                         # print("offsets:", offsets)
-                        succ = clue.set_kernel(gmap, budgets, (x,y), base, offsets)
+                        succ = clue.set_kernels(gmap, budgets, (x,y), base, offsets)
                         
                         if succ:
                             compile(gmap, ghids, budgets, cdr, results)
@@ -270,6 +262,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
         
         
     def compile(gmap, ghids, budgets, clues_rest, results):
+       
         if clues_rest == []: 
             
             # base case 
@@ -304,7 +297,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
                     budgets = oldB
                     
                     alter = clue.get_bird_alternative(car)
-                    # print("ALTER:", alter)
+                    # print("ALTER:",  z alter)
                     
                     compile(gmap, ghids, budgets, [alter] +cdr , results)
                     gmap = old
@@ -341,14 +334,13 @@ def compile_others(gmap, hids, budgets, clues_rest):
               
                     
             elif _type == CLUE_OVERLOOK:
-                old = game_map.copy_gmap(gmap)
-                oldB = budget.copyBudget(budgets)
+                
                 alters = clue.get_overlook_alternatives(car)
+                print("ALTERS:", alters)
                 for alt in alters:
                     # print("alter:", alt)
-                    gmap = old
-                    budgets = oldB
-                
+                    old = game_map.copy_gmap(gmap)
+                    oldB = budget.copyBudget(budgets)
                     compile(gmap, ghids, budgets, [alt] + cdr, results)
                     gmap = old
                     budgets = oldB    
@@ -358,6 +350,9 @@ def compile_others(gmap, hids, budgets, clues_rest):
                 """
                 palced: whole row or column (5 lengths)
                 """
+                # todo: bug, expect: sat, given: unsat
+                print("hit_CLUE_OVERLOOK_PLACED ", car, game_map.string(gmap))
+                
                 if clue.kernel_has_hermit(k):
                     old = game_map.copy_gmap(gmap)
                     oldB = budget.copyBudget(budgets)
@@ -368,7 +363,9 @@ def compile_others(gmap, hids, budgets, clues_rest):
                 else:
                     place_common_clue(gmap, ghids, budgets, car, cdr, results)
                     
-            
+            else:
+                print("UNRECOGNIZED CLUE")
+                assert False
             
             
             
@@ -379,8 +376,134 @@ def compile_others(gmap, hids, budgets, clues_rest):
     compile(gmap, hids, budgets, clues_rest, results)
     return results
 
+# todo: bug
+def compile_rest(gmap, hids, budgets):
+    r = []
+    def compile(gmap, ghids, budgets, results):
+        print(game_map.string(gmap), budgets)
+        if budget.empty(budgets):
+            # base case 
+            t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+            print("leaf:\n",  game_map.string(gmap), budgets)
+            # breakpoint()
+            results.append(t)
+            return
+        
+        for x, row in enumerate(gmap):
+            for y, block in enumerate(row):
+                if block == EMPTY:
+                    for terrain, num in enumerate(budgets):
+                        if terrain != EMPTY and num > 0:
+                            old = game_map.copy_gmap(gmap)
+                            oldB = budget.copyBudget(budgets)                       
+                            succ = game_map.check_and_set_block(gmap, budgets, x, y, terrain)
+                            if succ:
+                                compile(gmap, ghids, budgets, results)
+                            gmap = old 
+                            budgets = oldB
+        
+    compile(gmap, hids, budgets, r)
+    return r
 
 
+def island_size_min(gmap, terrain):
+    def inner(gmap, x, y, terrain):
+        if game_map.validate_index(x,y) and game_map.get_block(gmap, x,y) == terrain:    
+            game_map.set_block(gmap, x, y, EMPTY)
+            return 1 + \
+                inner(gmap, x+1,y, terrain)+\
+                inner(gmap, x-1,y, terrain)+\
+                inner(gmap, x,y+1, terrain)+\
+                inner(gmap, x,y-1, terrain)
+                    
+        else:
+            return 0
+    
+
+
+
+    gmap_cp = game_map.copy_gmap(gmap)            
+    
+    min_size = 114514
+    for x, row  in enumerate(gmap_cp):
+            for y, block in enumerate(row):
+                if block == terrain:
+                    size = inner(gmap_cp, x, y, terrain)
+                    min_size = min(size, min_size)
+            
+    return min_size if min_size < 114514 else 0
+
+def island_num(gmap, terrain):
+    def inner(gmap, x, y, terrain):
+        if game_map.validate_index(x,y) and game_map.get_block(x,y) == terrain:    
+            game_map.set_block(gmap, x, y, EMPTY)
+            
+            inner(gmap, x+1,y, terrain)
+            inner(gmap, x-1,y, terrain)
+            inner(gmap, x,y+1, terrain)
+            inner(gmap, x,y-1, terrain)
+    
+
+    gmap_cp = game_map.copy_gmap(gmap)            
+    
+    cnt = 0
+    for x, row  in enumerate(gmap_cp):
+            for y, block in enumerate(row):
+                if block == terrain:
+                    cnt += 1
+                    inner(gmap_cp, x, y, terrain)
+           
+            
+    return cnt
+
+def exist_neighbor(gmap, terrain, neighbor):
+
+    for x, row  in enumerate(gmap):
+            for y, block in enumerate(row):
+                if block == terrain:
+                    
+                    for dire in {(-1,0),(1,0),(0,-1),(0,1)}:
+                        delta_x = dire[0]
+                        delta_y = dire[1]
+                        if game_map.get_block(gmap, x+delta_x,y+delta_y) == neighbor:
+                            return True
+    return False
+
+def cross_island_num(gmap, terrain):
+    def inner(gmap, x, y, terrain):
+        if game_map.validate_index(x,y) and game_map.get_block(x,y) == terrain:    
+            game_map.set_block(gmap, x, y, EMPTY)
+            
+            inner(gmap, x+1, y+1, terrain)
+            inner(gmap, x-1, y-1, terrain)
+            inner(gmap, x-1, y+1, terrain)
+            inner(gmap, x+1, y-1, terrain)
+    
+
+    gmap_cp = game_map.copy_gmap(gmap)            
+    
+    cnt = 0
+    for x, row  in enumerate(gmap_cp):
+            for y, block in enumerate(row):
+                if block == terrain:
+                    cnt += 1
+                    inner(gmap_cp, x, y, terrain)
+           
+            
+    return cnt
+                            
+
+def check_road(gmap):
+    return island_num(gmap, ROAD) == 1 and exist_neighbor(gmap, ROAD, OUTER)
+
+def check_river(gmap):
+    return island_size_min(gmap, RIVER) == 2 and island_num(gmap, RIVER) == 2
+
+def check_forest(gmap):
+    return not exist_neighbor(gmap, FOREST, FOREST)
+
+def check_village(gmap):
+    return cross_island_num(gmap, VILLIAGE) == 1
 """
 General Idea: BackTrack Testing
 
@@ -410,8 +533,38 @@ def solve(budgets, clues):
         rr = compile_others(gmap, hids, budgets, clues_rest)
         rrr.extend(rr)
     
+    print("CLUES Done.")
     show_results(rrr)
     # post_process(rrr)
+    
+    r_full = []
+    for r_final in rrr:
+        gmap = r_final[0]
+        hids = r_final[1]
+        budgets = r_final[2]
+        
+        r_rest = compile_rest(gmap, hids, budgets)
+        r_full.extend(r_rest)
+    
+    show_results(r_full)
+    print("FILLs Done.")
+    
+    rk = []
+    for r in r_full:
+        gmap = r_final[0]
+        hids = r_final[1]
+        budgets = r_final[2]
+        if check_river(gmap) and\
+            check_road(gmap) and \
+            check_forest(gmap) and\
+            check_village(gmap):
+            
+            rk.append(r)
+    
+    show_results(rk)
+        
+                    
+            
     
     
 
@@ -623,13 +776,17 @@ def test3():
     
     
     
-    #   4
-    # 1 2 6
-    #   3
-    k_overlook = clue.create_kernel((PLAINS, (0,0)),
-                                 (RIVER,(1,0)),
-                                 (RIVER,(2,0)),
-                                 (FOREST,(3,0)))
+    # 4
+    # 6
+    # 6
+    # 6
+    # 2
+    k_overlook = clue.create_kernel((RIVER, (0,0)),
+                                 (PLAINS,(1,0)),
+                                 (PLAINS,(2,0)),
+                                 (PLAINS, (3,0)),
+                                 (FOREST,(4,0)),
+                                 )
     
     oclue = clue.create_clue(CLUE_OVERLOOK, 
                              kernel= [k_overlook], 
@@ -637,12 +794,13 @@ def test3():
     
     
     
-    solve(budgets, [hclue, hclue1, hclue2, hclue3, cclue, dclue, dclue1, oclue, k_overlook])
+    solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
 
 
 if __name__ == '__main__':
     #test1()
     test2()
+    test3()
     
     
 

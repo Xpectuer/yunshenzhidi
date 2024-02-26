@@ -59,14 +59,14 @@ def set_hermit_nearby(gmap, budgets, h_base, offsets) -> bool:
                                                absolute_coor[0],
                                                absolute_coor[1],
                                                terrain_type)
-        
+
         if not success:
             return False
         
     return True
 
-def set_kernel(gmap, budgets, abs_base, base, offsets) -> bool:
-    
+def set_kernels(gmap, budgets, abs_base, base, offsets) -> bool:
+    # if base == (4, (-1, -1)) and abs_base == (1,3): breakpoint()
     base_type = get_terrain_type(base)
     
     success = game_map.check_and_set_block(gmap, budgets,
@@ -161,7 +161,7 @@ def draydRot90D(clue_dryad):
     # get hermit indices
     
     forest_idxs = get_forest_idxs(clue_dryad)
-    print(forest_idxs)
+    # print(forest_idxs)
     assert len(forest_idxs) == 1
     
     coors = map(lambda t: get_terrain_coor(t), k)
@@ -222,7 +222,7 @@ def get_overlook_placed_default(clue_dryad):
     ks = get_kernels(clue_dryad)
     dire = get_overlook_direction(clue_dryad)
     
-    r = create_clue(CLUE_OVERLOOK, kernel=ks, direction=dire)
+    r = create_clue(CLUE_OVERLOOK_PLACED, kernel=ks, direction=dire)
     
     return r
 
@@ -235,12 +235,12 @@ def place_overlook_by_direction(overlook_clue):
     
     kp = align_fun(k)
     
-    return create_clue(CLUE_OVERLOOK_PLACED, kernel=[kp], direction=dire)
+    return kp
 
 
     
 # todo: refacor
-def reveal_possible_hermits(overlook_clue) -> list:
+def reveal_possible_hermits_with_forest(overlook_clue) -> list:
     
     dire = get_overlook_direction(overlook_clue)
     k = get_kernel_or_fail(overlook_clue)
@@ -262,20 +262,16 @@ def reveal_possible_hermits(overlook_clue) -> list:
                 res.append(insert_fun(k, idx, HERMITS))
         
 
-        if n_k == 2:
+        elif n_k == 2:
             idxs = [0, 1]
-            
             for idx in idxs:
                 res.append(kernel_vertical_insert(k, idx, HERMITS))
             
-        
-        if n_k == 3:
+        elif n_k == 3:
             idxs = [0,1]
-
             for i in idxs:
                 res.append(insert_fun(k, i, HERMITS))
             for r in res:
-                
                 cr = copy_kernel(r)
                 ncr = len(cr)
                 idx1 = [ncr -1]
@@ -284,9 +280,8 @@ def reveal_possible_hermits(overlook_clue) -> list:
           
         
         
-        if n_k == 4:
+        elif n_k == 4:
             idxs = [0, 1, n_k-1]
-            
             for i in idxs:
                 res.append(insert_fun(k, i, HERMITS))       
                         
@@ -302,13 +297,13 @@ def reveal_possible_hermits(overlook_clue) -> list:
                 res.append(insert_fun(k, idx, HERMITS))
          
 
-        if n_k == 2:
+        elif n_k == 2:
             idxs = [n_k, n_k - 1]
             for idx in idxs:
                 res.append(insert_fun(k, idx, HERMITS))
             
         
-        if n_k == 3:
+        elif n_k == 3:
             idxs = [n_k, n_k - 1]
             
             for i in idxs:
@@ -321,60 +316,72 @@ def reveal_possible_hermits(overlook_clue) -> list:
                 for j in idx1:
                     res.append(insert_fun(cr, j, HERMITS))
                         
-            
-        
-        if n_k == 4:
+        elif n_k == 4:
             idxs = [n_k, n_k-1, 1]
             if dire == NORTH:
                 for i in idxs:
                     res.append(kernel_vertical_insert(k, i, HERMITS))       
                         
-            
-    
-   
-    
-    
     return list(map(lambda x: align_fun(x), res))
         
         
-    
+        
+
 def get_overlook_alternatives(overlook_clue) -> list:
     ks = get_kernels(overlook_clue)
     assert len(ks) == 1
     k = ks[0]
     n_terrains = len(k)
+    dire = get_overlook_direction(overlook_clue)
     
     align_fun = init_align_map()
-    insert_fun = init_insert_fun()
+    insert_fun = init_insert_fun(dire)
 
+    r = []
     if n_terrains == TOTAL_EDGE:
-        return get_overlook_placed_default(overlook_clue)
+        r.append(get_overlook_placed_default(overlook_clue))
+        return r
     elif n_terrains < TOTAL_EDGE:
-        r = []
+        
         # WITH FOREST
         if kernel_has_terrain(k, FOREST):
             # NO HERMITS
+            """
+            returns kernel
+            """
             r1 = place_overlook_by_direction(overlook_clue)
             r.append(r1)
             
             
-            r2s = reveal_possible_hermits(overlook_clue)
+            r2s = reveal_possible_hermits_with_forest(overlook_clue)
             r.extend(r2s)
         else:
             # NO FORESTS
             # MUST HAVE HERMIT
-            # n = 3 ==> 1 hermits
-            # n = 4 ==> 2 hermits
+            # n = 3 ==> 2 hermits
+            # n = 4 ==> 1 hermits
             assert n_terrains == 3 or n_terrains == 4
             if n_terrains == 3:
-                idx 
-            elif n_terrains == 4:
-                idxs = [0, 1, 3, 4]
+                idx = [0, 1, n_terrains-1, n_terrains]
                 for idx in idxs:
                     r.append(align_fun(insert_fun(k, idx, HERMITS)))
-            
+                t= []
+                for k in r:
+                    ck = copy_kernel(k)
+                    ncr = len(ck)
+                    idx1 = [ncr -1]
+                    for j in idx1:
+                        t.append(insert_fun(ck, j, HERMITS))
+                
+                r.extend(t)
+            elif n_terrains == 4:
+                idxs = [0, 1, n_terrains - 1, n_terrains]
+                for idx in idxs:
+                    r.append(align_fun(insert_fun(k, idx, HERMITS)))
+
+        r_clues = list(map(lambda k:create_clue(CLUE_OVERLOOK_PLACED, kernel=[k], direction=dire), r))
         
-        return r
+        return r_clues
 
 
 def create_clue(clue_type, **kwargs):
@@ -399,7 +406,7 @@ def get_kernels(clue):
 def get_kernel_or_fail(clue):
     ks = get_kernels(clue)
     assert len(ks) == 1
-    k = k[0]
+    k = ks[0]
     return k
 
 def create_kernel(k1, *args):

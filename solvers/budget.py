@@ -13,11 +13,13 @@ def initBudget():
 def copyBudget(budgets):
     return [b for b in budgets]
 
-def consumeBudget(budgets, terrian):
+def consumeBudget(budgets, terrian) -> bool:
     old = budgets[terrian] 
     new = old - 1
-    budgets[terrian] = new
-    return new >= 0
+    succ = new >= 0
+    if succ:
+        budgets[terrian] = new
+    return succ
 
 def restoreBudgets(budgets, terrain):
     old = budgets[terrain]
@@ -31,4 +33,9 @@ def validateBudgets(budgets):
     for e in budgets:
         cnt  += e
     assert cnt ==  TOTAL_BLOCKS
-    
+
+def empty(budgets):
+    for budget in budgets:
+        if budget != 0:
+            return False
+    return True

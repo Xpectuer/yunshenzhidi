@@ -10,12 +10,12 @@ def init_direction_interval_map():
     """
     (row_range, col_range)
     """
-    n = TOTAL_EDGE
+    n = TOTAL_EDGE + 1
     return {
-        NORTH_EAST:((0,2),(n-2, n)),
+        NORTH_EAST:((1,3),(n-2, n)),
         SOUTH_EAST :((n-2,n),(n-2,n)),
-        SOUTH_WEST :((n-2,n),(0,2)),
-        NORTH_WEST :((0,2),(0,2))
+        SOUTH_WEST :((n-2,n),(1,3)),
+        NORTH_WEST :((1,3),(1,3))
     }
     
 hermit_sections = init_direction_interval_map()
@@ -45,7 +45,7 @@ def init_game_map():
 
 
 def get_block(game_map, i, j):
-    return game_map[i+1][j+1]
+    return game_map[i][j]
 
 def get_block_from_coor(game_map, coor):
     i = coor[0]
@@ -53,10 +53,10 @@ def get_block_from_coor(game_map, coor):
     return get_block(game_map, i, j)
 
 def validate_index(i, j):
-    return (0 <= i < TOTAL_EDGE and 0 <= j < TOTAL_EDGE)
+    return (1 <= i < TOTAL_EDGE+1 and 1 <= j < TOTAL_EDGE+1)
 
 def set_block(game_map, i, j ,v):
-    game_map[i+1][j+1] = v
+    game_map[i][j] = v
 
 def clear_block(game_map, i, j): set_block(game_map, i, j, EMPTY)
 
@@ -65,12 +65,13 @@ def check_and_set_block(game_map, budgets, i, j , terrian) -> bool:
     if terrian == OUTER:
         return set_outer(i,j)
     elif terrian == HERMITS:
+        
         inHermit = False
         for _, section in hermit_sections.items():
             inHermit = inHermit or utils.coor_in((i,j), section)
         return inHermit and set_inner(game_map, budgets, i, j , terrian)
     else:
-        return set_inner(game_map, budgets, i, j , terrian)
+        return set_inner(game_map, budgets, i, j, terrian)
 
 
 def set_inner(game_map, budgets, i, j , terrian) -> bool:
@@ -82,7 +83,7 @@ def set_inner(game_map, budgets, i, j , terrian) -> bool:
         if isOverride:    
             return True
         elif avai:
-            set_block(game_map, i, j , terrian)
+            set_block(game_map, i, j, terrian)
             # budget > 0
             return budget.consumeBudget(budgets, terrian)
     else:
