@@ -554,10 +554,10 @@ def solve(budgets, clues):
         gmap = r_final[0]
         hids = r_final[1]
         budgets = r_final[2]
-        if check_river(gmap) and\
-            check_road(gmap) and \
-            check_forest(gmap) and\
-            check_village(gmap):
+        if check_river(gmap):
+            # check_road(gmap) and \
+            # check_forest(gmap) and\
+            # check_village(gmap):
             
             rk.append(r)
     
@@ -794,7 +794,9 @@ def test3():
     
     
     
-    solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
+    #solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
+    solve(budgets, [hclue, hclue1, dclue, oclue])
+    #solve(budgets, [])
 
 
 if __name__ == '__main__':
