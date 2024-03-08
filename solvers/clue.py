@@ -593,7 +593,3 @@ if __name__ == '__main__':
     
     print(kernel_left_align(k_overlook))
     print(kernel_right_align(k_overlook))
-    
-
-    
-    

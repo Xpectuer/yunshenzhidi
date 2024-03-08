@@ -60,7 +60,28 @@ def set_block(game_map, i, j ,v):
 
 def clear_block(game_map, i, j): set_block(game_map, i, j, EMPTY)
 
+# for block fill 
+def check_and_place_block(game_map, budgets, i, j , terrian) -> bool: 
+    if terrian == HERMITS:
+        inHermit = False
+        for _, section in hermit_sections.items():
+            inHermit = inHermit or utils.coor_in((i,j), section)
+        return inHermit and place_inner(game_map, budgets, i, j , terrian)
+    else:
+        return place_inner(game_map, budgets, i, j, terrian)
 
+# place inner
+def place_inner(game_map, budgets, i, j , terrian):
+    inBound = validate_index(i, j) 
+    if inBound:
+        avai = get_block(game_map, i, j) == EMPTY 
+        if avai:
+            set_block(game_map, i, j, terrian)
+            return budget.consumeBudget(budgets, terrian)
+    else:
+        return False
+
+# for clue fill
 def check_and_set_block(game_map, budgets, i, j , terrian) -> bool: 
     if terrian == OUTER:
         return set_outer(i,j)
@@ -74,7 +95,8 @@ def check_and_set_block(game_map, budgets, i, j , terrian) -> bool:
         return set_inner(game_map, budgets, i, j, terrian)
 
 
-def set_inner(game_map, budgets, i, j , terrian) -> bool:
+
+def set_inner(game_map, budgets, i, j, terrian) -> bool:
     inBound = validate_index(i, j) 
 
     if inBound:

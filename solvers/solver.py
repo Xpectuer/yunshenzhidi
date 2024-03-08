@@ -5,8 +5,9 @@ LastEditor: XPectuer
 '''
 
 from consts import *
-import game_map, clue, utils
-import copy, budget
+import game_map, clue
+import budget
+
 
 
 def set_hermit_id(hids, direction, id):
@@ -366,43 +367,198 @@ def compile_others(gmap, hids, budgets, clues_rest):
             else:
                 print("UNRECOGNIZED CLUE")
                 assert False
-            
-            
-            
-        
-            
-        
+                
     results = []            
     compile(gmap, hids, budgets, clues_rest, results)
     return results
 
-# todo: bug
-def compile_rest(gmap, hids, budgets):
+# todo: too slow. need prune.
+def fill_rest_vanilla(gmap, hids, budgets):
     r = []
     def compile(gmap, ghids, budgets, results):
-        print(game_map.string(gmap), budgets)
+        # print(game_map.string(gmap), budgets)
         if budget.empty(budgets):
             # base case 
             t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
             print("leaf:\n",  game_map.string(gmap), budgets)
-            # breakpoint()
+            
+            #breakpoint()
+            results.append(t)
+            return
+        
+        
+        old = game_map.copy_gmap(gmap)
+        oldB = budget.copyBudget(budgets)  
+        for x, row in enumerate(old):
+            for y, block in enumerate(row):  
+                # breakpoint()
+                if block == EMPTY:
+                    
+                    for terrain, num in enumerate(oldB):
+                        if terrain != EMPTY and num > 0:
+                                       
+                            succ = game_map.check_and_set_block(gmap, budgets=budgets, i=x, j=y, terrian=terrain)
+                            if succ:
+                                print(x, y, block)
+                                print(game_map.GetTerrainDesc(terrain))
+                                print(game_map.string(gmap))
+                                
+                                print("budgets:", budgets)
+                                # breakpoint()
+                                compile(gmap, hids, budgets=budgets, results=results)
+                                gmap = old
+                                budgets = oldB
+                                
+
+        
+    compile(gmap, hids, budgets, r)
+    print("results:", len(r))
+    return r
+
+
+def place_road(gmap, ghids, budgets,x,y, results):
+    if budgets[ROAD] == 0:
+        t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+        print("leaf road:\n",  game_map.string(gmap), budgets)
+        
+        results.append(t)
+        return
+    else:
+        dires = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        for dire in dires:
+            old = game_map.copy_gmap(gmap)
+            oldB = budget.copyBudget(budgets)
+            
+            dx = dire[0]
+            dy = dire[1]
+            xdx = x + dx
+            ydy = y + dy
+            succ = game_map.check_and_place_block(gmap, budgets, xdx, ydy, ROAD)
+            if succ:
+                print(game_map.string(gmap))
+                print(budgets)
+                place_road(gmap, ghids, budgets, xdx, ydy, results)
+                gmap = old
+                budgets = oldB
+                
+
+def place_river(gmap, ghids, budgets, x, y, results):
+    if budgets[RIVER] == 0:
+        t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+        print("leaf:\n",  game_map.string(gmap), budgets)
+        results.append(t)
+    else:
+        dires = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        
+        for dire in dires:
+            old = game_map.copy_gmap(gmap)
+            oldB = budget.copyBudget(budgets)
+            
+            dx = dire[0]
+            dy = dire[1]
+            xdx = x + dx
+            ydy = y + dy
+            succ = game_map.check_and_place_block(gmap, budgets, xdx, ydy, RIVER)
+            if succ:
+                place_river(gmap, ghids, budgets, xdx, ydy, results)
+                gmap = old
+                budgets = oldB
+
+
+def place_village(gmap, ghids, budgets,x,y, results):
+    if budgets[VILLIAGE] == 0:
+        t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+        print("leaf road:\n",  game_map.string(gmap), budgets)
+        
+        results.append(t)
+        return
+    else:
+        dires = [(-1, -1), (1, 1), (-1, 1), (1, -1)]
+        for dire in dires:
+            old = game_map.copy_gmap(gmap)
+            oldB = budget.copyBudget(budgets)
+            
+            dx = dire[0]
+            dy = dire[1]
+            xdx = x + dx
+            ydy = y + dy
+            succ = game_map.check_and_place_block(gmap, budgets, xdx, ydy, VILLIAGE)
+            if succ:
+                print(game_map.string(gmap))
+                print(budgets)
+                place_village(gmap, ghids, budgets, xdx, ydy, results)
+                gmap = old
+                budgets = oldB
+
+# ===============================================================================
+
+def fill_terrain(gmap, hids, budgets, terrain, place_fun):
+    r = []
+    for x, row in enumerate(gmap):
+        for y, block in enumerate(row):
+            if block == terrain:
+                place_fun(gmap, hids, budgets, x, y, r)
+
+    return r
+    
+
+
+def place_forest(gmap, ghids, budgets,x,y, results):
+    if budgets[FOREST] == 0:
+        t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+        print("leaf:\n",  game_map.string(gmap), budgets)
+        
+        results.append(t)
+    else:
+        dires = [(-1, -1), (1, 1), (-1, 1), (1, -1)]
+        for dire in dires:
+            old = game_map.copy_gmap(gmap)
+            oldB = budget.copyBudget(budgets)
+            
+            dx = dire[0]
+            dy = dire[1]
+            xdx = x + dx
+            ydy = y + dy
+            succ = game_map.check_and_set_block(gmap, budgets, xdx, ydy, FOREST)
+            if succ:
+                place_forest(gmap, ghids, budgets, results)
+                gmap = old
+                budgets = oldB
+                
+
+
+                    
+def fill_rest(gmap, hids, budgets):
+    r = []
+
+    def place(gmap, ghids, budgets, results):
+        # print(game_map.string(gmap), budgets)
+        if budget.empty(budgets):
+            # base case 
+            t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
+            print("leaf:\n",  game_map.string(gmap), budgets)
+            
+            #breakpoint()
             results.append(t)
             return
         
         for x, row in enumerate(gmap):
-            for y, block in enumerate(row):
+            for y, block in enumerate(row):  
                 if block == EMPTY:
+                    
                     for terrain, num in enumerate(budgets):
+                        old = game_map.copy_gmap(gmap)
+                        oldB = budget.copyBudget(budgets)
                         if terrain != EMPTY and num > 0:
-                            old = game_map.copy_gmap(gmap)
-                            oldB = budget.copyBudget(budgets)                       
-                            succ = game_map.check_and_set_block(gmap, budgets, x, y, terrain)
+                            succ = game_map.check_and_place_block(gmap, budgets, x, y, terrain)
                             if succ:
-                                compile(gmap, ghids, budgets, results)
-                            gmap = old 
-                            budgets = oldB
-        
-    compile(gmap, hids, budgets, r)
+                                place(gmap, ghids, budgets, results)
+                                gmap = old 
+                                budgets = oldB
+
+
+    place(gmap, hids, budgets, r)
+
     return r
 
 
@@ -418,9 +574,6 @@ def island_size_min(gmap, terrain):
                     
         else:
             return 0
-    
-
-
 
     gmap_cp = game_map.copy_gmap(gmap)            
     
@@ -430,12 +583,14 @@ def island_size_min(gmap, terrain):
                 if block == terrain:
                     size = inner(gmap_cp, x, y, terrain)
                     min_size = min(size, min_size)
-            
+    # breakpoint()
     return min_size if min_size < 114514 else 0
 
 def island_num(gmap, terrain):
     def inner(gmap, x, y, terrain):
-        if game_map.validate_index(x,y) and game_map.get_block(x,y) == terrain:    
+        if game_map.validate_index(x,y) \
+            and game_map.get_block(gmap, x,y) == terrain:    
+                
             game_map.set_block(gmap, x, y, EMPTY)
             
             inner(gmap, x+1,y, terrain)
@@ -471,7 +626,7 @@ def exist_neighbor(gmap, terrain, neighbor):
 
 def cross_island_num(gmap, terrain):
     def inner(gmap, x, y, terrain):
-        if game_map.validate_index(x,y) and game_map.get_block(x,y) == terrain:    
+        if game_map.validate_index(x,y) and game_map.get_block(gmap, x,y) == terrain:    
             game_map.set_block(gmap, x, y, EMPTY)
             
             inner(gmap, x+1, y+1, terrain)
@@ -493,17 +648,19 @@ def cross_island_num(gmap, terrain):
     return cnt
                             
 
-def check_road(gmap):
-    return island_num(gmap, ROAD) == 1 and exist_neighbor(gmap, ROAD, OUTER)
-
 def check_river(gmap):
     return island_size_min(gmap, RIVER) == 2 and island_num(gmap, RIVER) == 2
+
+def check_road(gmap):
+    return island_num(gmap, ROAD) == 1 and exist_neighbor(gmap, ROAD, OUTER)
 
 def check_forest(gmap):
     return not exist_neighbor(gmap, FOREST, FOREST)
 
 def check_village(gmap):
     return cross_island_num(gmap, VILLIAGE) == 1
+
+
 """
 General Idea: BackTrack Testing
 
@@ -533,35 +690,76 @@ def solve(budgets, clues):
         rr = compile_others(gmap, hids, budgets, clues_rest)
         rrr.extend(rr)
     
-    print("CLUES Done.")
+    
     show_results(rrr)
-    # post_process(rrr)
+    print(f"CLUES Done. with size = {len(rrr)}")
     
-    r_full = []
-    for r_final in rrr:
-        gmap = r_final[0]
-        hids = r_final[1]
-        budgets = r_final[2]
+    
+    r_road = []
+    for r in rrr:
+        gmap = r[0]
+        hids = r[1]
+        budgets = r[2]
         
-        r_rest = compile_rest(gmap, hids, budgets)
-        r_full.extend(r_rest)
+        r_fill_road = fill_terrain(gmap, hids, budgets, ROAD, place_fun=place_road)
+        print(f"With r_rest {len(r_fill_road)}")
+        r_road.extend(r_fill_road)
     
-    show_results(r_full)
-    print("FILLs Done.")
+    r_river = []
+    for r in r_road:
+        gmap = r[0]
+        hids = r[1]
+        budgets = r[2]
+        
+        r_fill_river = fill_terrain(gmap, hids, budgets, RIVER, place_fun=place_river)
+        print(f"With r_rest {len(r_fill_river)}")
+        r_river.extend(r_fill_river)
     
-    rk = []
-    for r in r_full:
-        gmap = r_final[0]
-        hids = r_final[1]
-        budgets = r_final[2]
-        if check_river(gmap):
-            # check_road(gmap) and \
-            # check_forest(gmap) and\
-            # check_village(gmap):
-            
-            rk.append(r)
     
-    show_results(rk)
+    r_villa = []
+    for r in r_river:
+        gmap = r[0]
+        hids = r[1]
+        budgets = r[2]
+        
+        r_fill_villa = fill_terrain(gmap, hids, budgets, ROAD, place_fun=place_village)
+        print(f"With r_rest {len(r_fill_villa)}")
+        r_villa.extend(r_fill_villa)
+    
+    
+    r_rest = []
+    for r in r_villa:
+        gmap = r[0]
+        hids = r[1]
+        budgets = r[2]
+        
+        r_fill_rest = fill_rest(gmap, hids, budgets)
+        print(f"With r_rest {len(r_fill_rest)}")
+        r_rest.extend(r_fill_rest)
+    
+    
+    r_tobe_check = r_rest
+    
+ 
+    
+    r_final = []
+    for r in r_tobe_check:
+        gmap = r[0]
+        hids = r[1]
+        budgets = r[2]
+        
+        
+        a = check_river(gmap) 
+        b = check_road(gmap) 
+        c = check_forest(gmap)
+        d = check_village(gmap)
+        
+        # print(a,b,c,d)
+        
+        if a and b and c and d:
+            r_final.append(r)
+        
+    show_results(r_final)
         
                     
             
@@ -594,7 +792,7 @@ def show_results(results:list[tuple]):
 
 def test1():
     my_game_map = game_map.init_game_map()
-    print(game_map.string(my_game_map))
+    # print(game_map.string(my_game_map))
     budgets = budget.initBudget()
     print("budget: ", budgets)
     
@@ -612,7 +810,7 @@ def test1():
 
 def test2():
     my_game_map = game_map.init_game_map()
-    print(game_map.string(my_game_map))
+    # print(game_map.string(my_game_map))
     budgets = budget.initBudget()
     print("budget: ", budgets)
     
@@ -697,7 +895,7 @@ def test2():
 
 def test3():
     my_game_map = game_map.init_game_map()
-    print(game_map.string(my_game_map))
+    # print(game_map.string(my_game_map))
     budgets = budget.initBudget()
     print("budget: ", budgets)
     
@@ -759,6 +957,7 @@ def test3():
                                  (FOREST,(1,1)),
                                  (ROAD, (2,1)))
 
+    
     dclue = clue.create_clue(CLUE_DRYAD, 
                              kernel= [k_dryad])
     
@@ -795,13 +994,16 @@ def test3():
     
     
     #solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
-    solve(budgets, [hclue, hclue1, dclue, oclue])
+    # solve(budgets, [hclue, hclue1, dclue, oclue])
+    solve(budgets, [hclue, hclue1, dclue])
     #solve(budgets, [])
 
 
 if __name__ == '__main__':
-    #test1()
-    test2()
+    # test1()
+    # test2()
+    import sys
+    
     test3()
     
     
