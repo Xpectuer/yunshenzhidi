@@ -40,11 +40,11 @@ CLUE_DRYAD_ROT = 4
 # 极目，放置隐者后
 CLUE_OVERLOOK_PLACED = 5
 
-# set 
+# # set 
 
-SET_SUCC = 0
-SET_SAME = 1
-SET_FAIL = 2
+# SET_SUCC = 0
+# SET_SAME = 1
+# SET_FAIL = 2
 
 # directions
 NO_DIRECTION=-1
@@ -78,6 +78,12 @@ direction_to_str_map  = {
     NORTH_WEST: '西北'
 }
 
+clue_to_str_map = {
+    CLUE_HERMIT:"隐士",
+    CLUE_DRYAD: "树灵",
+    CLUE_BIRD: "飞鸟",
+    CLUE_OVERLOOK:"极目",
+}
 
 def GetTerrainDesc(terrain: int):
     return terrian_to_str_map[terrain]
@@ -85,4 +91,7 @@ def GetTerrainDesc(terrain: int):
 def GetDirectionDesc(direction: int) -> str:
     return direction_to_str_map[direction]    
 
+
+def GetClueDesc(_clue: int) -> str:
+    return clue_to_str_map[_clue]    
 

@@ -25,7 +25,6 @@ def compile_hermits(clues_hermits, budgets):
     A function \f that takes hermit_clues
     and outputs gmap filled by possible hermits (gmap, direction)
     """
-    # ...
     results = []
     
     def compile_hermit_direction(gmap, ghids, budgets, car, cdr, results) -> bool:
@@ -337,7 +336,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
             elif _type == CLUE_OVERLOOK:
                 
                 alters = clue.get_overlook_alternatives(car)
-                print("ALTERS:", alters)
+                # print("ALTERS:", alters)
                 for alt in alters:
                     # print("alter:", alt)
                     old = game_map.copy_gmap(gmap)
@@ -351,8 +350,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
                 """
                 palced: whole row or column (5 lengths)
                 """
-                # todo: bug, expect: sat, given: unsat
-                print("hit_CLUE_OVERLOOK_PLACED ", car, game_map.string(gmap))
+
                 
                 if clue.kernel_has_hermit(k):
                     old = game_map.copy_gmap(gmap)
@@ -380,7 +378,7 @@ def fill_rest_vanilla(gmap, hids, budgets):
         if budget.empty(budgets):
             # base case 
             t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-            print("leaf:\n",  game_map.string(gmap), budgets)
+            # print("leaf:\n",  game_map.string(gmap), budgets)
             
             #breakpoint()
             results.append(t)
@@ -399,11 +397,11 @@ def fill_rest_vanilla(gmap, hids, budgets):
                                        
                             succ = game_map.check_and_set_block(gmap, budgets=budgets, i=x, j=y, terrian=terrain)
                             if succ:
-                                print(x, y, block)
-                                print(game_map.GetTerrainDesc(terrain))
-                                print(game_map.string(gmap))
+                                # print(x, y, block)
+                                # print(game_map.GetTerrainDesc(terrain))
+                                # print(game_map.string(gmap))
                                 
-                                print("budgets:", budgets)
+                                # print("budgets:", budgets)
                                 # breakpoint()
                                 compile(gmap, hids, budgets=budgets, results=results)
                                 gmap = old
@@ -419,7 +417,7 @@ def fill_rest_vanilla(gmap, hids, budgets):
 def place_road(gmap, ghids, budgets,x,y, results):
     if budgets[ROAD] == 0:
         t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-        print("leaf road:\n",  game_map.string(gmap), budgets)
+        # print("leaf road:\n",  game_map.string(gmap), budgets)
         
         results.append(t)
         return
@@ -435,8 +433,7 @@ def place_road(gmap, ghids, budgets,x,y, results):
             ydy = y + dy
             succ = game_map.check_and_place_block(gmap, budgets, xdx, ydy, ROAD)
             if succ:
-                print(game_map.string(gmap))
-                print(budgets)
+           
                 place_road(gmap, ghids, budgets, xdx, ydy, results)
                 gmap = old
                 budgets = oldB
@@ -445,7 +442,7 @@ def place_road(gmap, ghids, budgets,x,y, results):
 def place_river(gmap, ghids, budgets, x, y, results):
     if budgets[RIVER] == 0:
         t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-        print("leaf:\n",  game_map.string(gmap), budgets)
+        # print("leaf:\n",  game_map.string(gmap), budgets)
         results.append(t)
     else:
         dires = [(-1, 0), (1, 0), (0, 1), (0, -1)]
@@ -468,7 +465,7 @@ def place_river(gmap, ghids, budgets, x, y, results):
 def place_village(gmap, ghids, budgets,x,y, results):
     if budgets[VILLIAGE] == 0:
         t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-        print("leaf road:\n",  game_map.string(gmap), budgets)
+        # print("leaf road:\n",  game_map.string(gmap), budgets)
         
         results.append(t)
         return
@@ -484,8 +481,7 @@ def place_village(gmap, ghids, budgets,x,y, results):
             ydy = y + dy
             succ = game_map.check_and_place_block(gmap, budgets, xdx, ydy, VILLIAGE)
             if succ:
-                print(game_map.string(gmap))
-                print(budgets)
+               
                 place_village(gmap, ghids, budgets, xdx, ydy, results)
                 gmap = old
                 budgets = oldB
@@ -506,7 +502,7 @@ def fill_terrain(gmap, hids, budgets, terrain, place_fun):
 def place_forest(gmap, ghids, budgets,x,y, results):
     if budgets[FOREST] == 0:
         t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-        print("leaf:\n",  game_map.string(gmap), budgets)
+        # print("leaf:\n",  game_map.string(gmap), budgets)
         
         results.append(t)
     else:
@@ -536,7 +532,7 @@ def fill_rest(gmap, hids, budgets):
         if budget.empty(budgets):
             # base case 
             t = (game_map.copy_gmap(gmap), dict(ghids), [_ for _ in budgets])
-            print("leaf:\n",  game_map.string(gmap), budgets)
+            # print("leaf:\n",  game_map.string(gmap), budgets)
             
             #breakpoint()
             results.append(t)
@@ -671,7 +667,7 @@ normal_clue:
 def solve(budgets, clues):
     budget.validateBudgets(budgets)
     cluesp = breakdown_kernels(clues)
-    print("AFTER PRE PROCESS:", cluesp)
+    # print("AFTER PRE PROCESS:", cluesp)
     # assert False
     clues_hermits = clue.filter_hermits(cluesp)
     clues_rest= list(filter(lambda x: clue.get_clue_type(x)!=CLUE_HERMIT, cluesp))
@@ -691,7 +687,7 @@ def solve(budgets, clues):
         rrr.extend(rr)
     
     
-    show_results(rrr)
+    # show_results(rrr)
     print(f"CLUES Done. with size = {len(rrr)}")
     
     
@@ -702,7 +698,7 @@ def solve(budgets, clues):
         budgets = r[2]
         
         r_fill_road = fill_terrain(gmap, hids, budgets, ROAD, place_fun=place_road)
-        print(f"With r_rest {len(r_fill_road)}")
+        # print(f"With r_rest {len(r_fill_road)}")
         r_road.extend(r_fill_road)
     
     r_river = []
@@ -712,7 +708,7 @@ def solve(budgets, clues):
         budgets = r[2]
         
         r_fill_river = fill_terrain(gmap, hids, budgets, RIVER, place_fun=place_river)
-        print(f"With r_rest {len(r_fill_river)}")
+        # print(f"With r_rest {len(r_fill_river)}")
         r_river.extend(r_fill_river)
     
     
@@ -723,7 +719,7 @@ def solve(budgets, clues):
         budgets = r[2]
         
         r_fill_villa = fill_terrain(gmap, hids, budgets, ROAD, place_fun=place_village)
-        print(f"With r_rest {len(r_fill_villa)}")
+        # print(f"With r_rest {len(r_fill_villa)}")
         r_villa.extend(r_fill_villa)
     
     
@@ -734,7 +730,7 @@ def solve(budgets, clues):
         budgets = r[2]
         
         r_fill_rest = fill_rest(gmap, hids, budgets)
-        print(f"With r_rest {len(r_fill_rest)}")
+        # print(f"With r_rest {len(r_fill_rest)}")
         r_rest.extend(r_fill_rest)
     
     
@@ -993,9 +989,9 @@ def test3():
     
     
     
-    #solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
+    solve(budgets, [hclue, hclue1, hclue2, hclue3, dclue, oclue])
     # solve(budgets, [hclue, hclue1, dclue, oclue])
-    solve(budgets, [hclue, hclue1, dclue])
+    # solve(budgets, [hclue, hclue1, dclue])
     #solve(budgets, [])
 
 

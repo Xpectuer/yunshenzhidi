@@ -21,12 +21,12 @@
 
 ## solver
 - Backtracking Algorithm
-  - [ ] List All Possible Hermit Layout
+  - [x] List All Possible Hermit Layout
     - [x] common
-      - [ ] Override Hermit Nearby
-      - [ ] Hermit Occupy Empty 
-      - [ ] Contraints to 
-    - [ ] direction
+      - [x] Override Hermit Nearby
+      - [x] Hermit Occupy Empty 
+      - [x] Contraints to 
+    - [x] direction
 
 ## Verification
 - 
