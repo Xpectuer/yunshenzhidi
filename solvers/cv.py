@@ -6,11 +6,12 @@ LastEditor: XPectuer
 import cv2
 import numpy as np
 from PIL import Image
-from solvers.consts import *
+from consts import *
 
 
 # import pytesseract
 import os 
+
 
 
 
@@ -45,8 +46,8 @@ text2clue = {
 EPSILON = 5
 
 
-from paddleocr import PaddleOCR
-
+from paddleocr import PaddleOCR, paddleocr
+paddleocr.logging.disable(paddleocr.logging.DEBUG)
 # Paddleocr目前支持的多语言语种可以通过修改lang参数进行切换
 # 例如`ch`, `en`, `fr`, `german`, `korean`, `japan`
 
@@ -99,7 +100,8 @@ def process_directory(directory, f):
     This function will process all PNG files in the specified directory
     """
     r = []
-    for filename in os.listdir(directory):
+    abs = os.path.abspath(directory)
+    for filename in os.listdir(abs):
         if filename.endswith(".png"):
             print(f"Processing {filename}")
             path = os.path.join(directory, filename)
@@ -249,24 +251,53 @@ def parseKernel(img):
     
     print(list(zip(terrains, coors)))
     
-    return list(zip(terrains, coors))
+    return list(set(zip(terrains, coors)))
     
 def parseArrow(path):
     return find_arrow_direction(path)
 
 def fillOUTER(k):
-    coorDrayd = [(0,1), (1,1), (1,0), (1,2), (2, 1)]
-    
-    terrains = list(map(lambda x: x[0], k))
-    coors = list(map(lambda x: x[1], k)) 
-    print("coors:", coors)
-    coSet = set(coors)
-    for co in coorDrayd:
-        if co not in coSet:
-            coors.append(co)
-            terrains.append(OUTER)
-    
-    return list(zip(terrains, coors))
+    n = len(k)
+    if n < 5:
+        terrains = list(map(lambda x: x[0], k))
+        coors = list(map(lambda x: x[1], k)) 
+        
+        # cornor cases
+        if (0,0) in coors:
+            terrains += [OUTER]
+            if n == 4:
+                if (2,0) in coors:
+                    coorsp = list(map(lambda p: (p[0],p[1]+1), coors)) + [(1,0)]
+                    return list(zip(terrains, coorsp))
+                if (0,2) in coors:
+                    coorsp = list(map(lambda p: (p[0]+1,p[1]), coors)) + [(0,1)]
+                    return list(zip(terrains, coorsp))
+            elif n == 3:
+                terrains += [OUTER, OUTER]
+                # 00 10 11
+                # 00 01 10
+                if (1,1) in coors:
+                    coorsp = list(map(lambda p: (p[0],p[1]+1), coors)) + [(1,0), (2,1)]
+                    return list(zip(terrains, coorsp))
+                if (0,1) in coors:
+                    coorsp = list(map(lambda p: (p[0]+1,p[1]+1), coors)) + [(0,1)]
+                    return list(zip(terrains, coorsp))
+        
+        else:
+            coorDrayd = [(0,1), (1,1), (1,0), (1,2), (2, 1)]
+            print("coors:", coors)
+            
+            coSet = set(coors)
+            for co in coorDrayd:
+                if co not in coSet:
+                    coors.append(co)
+                    terrains.append(OUTER)
+            
+            return list(zip(terrains, coors))
+    elif n == 5:
+        return k
+    else:
+        assert False
 
 def parseBird(path):
     return (CLUE_BIRD, [parseKernelFromPath(path)])
@@ -317,9 +348,7 @@ def splitKernels(path):
     blur_image = cv2.GaussianBlur(img, (5,5), 0)
     
     gray_image = cv2.cvtColor(blur_image, cv2.COLOR_BGR2GRAY)
-    
-    # cv2.imwrite("testout_gray.png", gray_image) 
-    
+   
     # Apply threshold to get binary image
     _, binary_image = cv2.threshold(gray_image, 254, 255, cv2.THRESH_BINARY_INV)  
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
@@ -331,30 +360,33 @@ def splitKernels(path):
     
     # find and crop by number feature
     cropped_imgs = []
+    nums = []
     for idx, cnt in enumerate(contours):
         if len(cnt) >= 4:
             [x,y,w,h] = cv2.boundingRect(cnt)
             cropped_img = img[y:y+h, x:x+w]
             # cv2.imwrite(f"testout_{idx}.png", cropped_img)
-            nums = parseNumbers(cropped_img) 
-            if len(nums) == 1:
+            n = parseNumbers(cropped_img) 
+            if len(n) == 1:
+                nums.extend(n)
                 cropped_imgs.append(cropped_img)
                 # cv2.imwrite(f"testout_{idx}.png", cropped_img)
     
-    return cropped_imgs            
+    return cropped_imgs, nums            
     
     
         
 
 def parseHermit(dire, path):
-    numbers = parseNumbersFromPath(path)
+    
     # breakpoint()
     if dire == NO_DIRECTION:
-        ks = splitKernels(path)
+        ks, nums = splitKernels(path)
         kernels = list(map(lambda x: parseKernel(x), ks))
         print(kernels)
-        return (CLUE_HERMIT, kernels, numbers, dire)
+        return (CLUE_HERMIT, kernels, nums, dire)
     else: # direction
+        numbers = parseNumbersFromPath(path)
         k = parseKernelFromPath(path)
         print(k)
         return (CLUE_HERMIT, [k], numbers, dire)    
@@ -395,12 +427,20 @@ def test_batch():
     
     for r in clues:
         print("RESULT:", r)
+    
+    
+    toWrite = str(list(map(lambda x: x[1], clues)))
+    with open("clues.txt","w") as f:
+        print(f'WRITING TO... {f.name}')
+        f.write(toWrite)
+    
             
 def test1(path):
     t = getClueTask(path)
     path, clueType, dire = t
     clue = parseClue(clueType, dire, path)        
     print("result:", clue)
+    
             
 
 if __name__ == '__main__':

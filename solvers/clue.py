@@ -141,7 +141,8 @@ def get_forest_idxs(clue_dryad):
     return r
 
 def rotate_coordinates(matrix, edge_num = 3):
-    n = edge_num ** 2
+    # todo: bug
+    n = edge_num
     return [(y, n-x-1) for x, y in matrix]
 
 """
@@ -173,6 +174,7 @@ def draydRot90D(clue_dryad):
     
     k = create_kernel(*terrains_p)
     
+    # print(k); breakpoint()
     return create_clue(CLUE_DRYAD_ROT, kernel=[k])
             
 # buggy

@@ -11,7 +11,9 @@ import budget
 
 
 def set_hermit_id(hids, direction, id):
-    hids[direction] = id
+    new = hids.copy()
+    new[direction] = id
+    return new
 
 def get_hermit_id(hids, direction):
     return hids[direction]
@@ -41,7 +43,7 @@ def compile_hermits(clues_hermits, budgets):
             
             if game_map.is_hermit_id_empty(ghids, direction) :
                 old_gmap = game_map.copy_gmap(gmap)
-                oldB = budget.copy(budgets)
+                oldB = budget.copyBudget(budgets)
                 ghidsp = set_hermit_id(ghids, direction, hid)
             
                 for x in range(*x_range):
@@ -50,6 +52,8 @@ def compile_hermits(clues_hermits, budgets):
                         succ = game_map.check_and_set_block(gmap, budgets, x, y, HERMITS)
                         # undo_stack.append((x,y))
                         if succ:
+                            if ghidsp == None:
+                                breakpoint()
                             compile(gmap, ghidsp, budgets, cdr,results)
                         gmap = old_gmap
                         budgets = oldB
@@ -65,8 +69,6 @@ def compile_hermits(clues_hermits, budgets):
             curr_hid = clue.get_hermit_hids(car)[0]
             # pre-compute offset of 
             offsets = clue.get_hermit_offset(car)
-            # print("offsets", offsets)
-            # undo_stack = []
             
             # set hermit or update
             
@@ -140,12 +142,13 @@ def compile_hermits(clues_hermits, budgets):
             return
         else: 
             car = clue_hermits[0]
+            # print(f"Processing CLUE {car}")
             cdr = clue_hermits[1:]
             ctype  = clue.get_clue_type(car)
             assert ctype == CLUE_HERMIT
             # choose 1 / 2
             compile_hermit_direction(gmap, ghids, budgets, car, cdr, results)
-            compile_hermit_common(gmap, ghids,budgets, car, cdr, results)
+            compile_hermit_common(gmap, ghids, budgets, car, cdr, results)
             
             
            
@@ -262,7 +265,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
         
         
     def compile(gmap, ghids, budgets, clues_rest, results):
-       
+        
         if clues_rest == []: 
             
             # base case 
@@ -273,6 +276,7 @@ def compile_others(gmap, hids, budgets, clues_rest):
             return
         else:
             car = clues_rest[0]
+            # print(f"Processing clue: {car}")
             cdr = clues_rest[1:]
             _type = clue.get_clue_type(car)
             ks = clue.get_kernels(car)
@@ -370,7 +374,6 @@ def compile_others(gmap, hids, budgets, clues_rest):
     compile(gmap, hids, budgets, clues_rest, results)
     return results
 
-# todo: too slow. need prune.
 def fill_rest_vanilla(gmap, hids, budgets):
     r = []
     def compile(gmap, ghids, budgets, results):
@@ -683,6 +686,8 @@ def solve(budgets, clues):
         hids = result[1]
         budgets = result[2]
         
+        # print("restr", clues_rest)
+        # breakpoint()
         rr = compile_others(gmap, hids, budgets, clues_rest)
         rrr.extend(rr)
     
@@ -764,6 +769,8 @@ def solve(budgets, clues):
 
 def show_gamemap(gmap: list[list[int]]):
     print(f"GameMap: \n{game_map.string(gmap)}")
+
+
 
 """
 Display Result 
@@ -994,13 +1001,58 @@ def test3():
     # solve(budgets, [hclue, hclue1, dclue])
     #solve(budgets, [])
 
-
+def test4():
+    budgets = budget.initBudget()
+    print("budget: ", budgets)
+    
+    k1 = clue.create_kernel((HERMITS, (0,0)),
+                            (RIVER, (1,0)))
+    k2 = clue.create_kernel((HERMITS, (0,0)),
+                            (VILLIAGE, (1,0)))
+    
+    
+    hclue =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [k1,k2],
+                              hIds= [2, 3],
+                              direction= NO_DIRECTION)
+    
+    # =
+    k3 = clue.create_kernel((HERMITS, (0,0)),
+                            (ROAD, (1,0)))
+    
+    k4 = clue.create_kernel((FOREST, (0,0)),
+                            (HERMITS, (0,1)))
+    
+    
+    hclue1 =  clue.create_clue(CLUE_HERMIT, 
+                              kernel= [k1,k2],
+                              hIds= [1, 4],
+                              direction= NO_DIRECTION)
+    # =
+    
+    
+    k_bird = clue.create_kernel((PLAINS, (0,0)),
+                                 (RIVER,(0,1)),
+                                 (PLAINS,(1,0)),
+                                 (FOREST,(1,1)))
+    
+    
+    
+    
+    
+    cclue = clue.create_clue(CLUE_BIRD, 
+                             kernel= [k_bird])
+    
+    
+    solve(budgets, [hclue,hclue1,cclue])
+    
 if __name__ == '__main__':
     # test1()
     # test2()
-    import sys
     
-    test3()
+    
+    # test3()
+    test4()
     
     
 
