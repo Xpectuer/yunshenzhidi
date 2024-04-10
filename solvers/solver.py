@@ -762,10 +762,7 @@ def solve(budgets, clues):
         
     show_results(r_final)
         
-                    
-            
-    
-    
+
 
 def show_gamemap(gmap: list[list[int]]):
     print(f"GameMap: \n{game_map.string(gmap)}")

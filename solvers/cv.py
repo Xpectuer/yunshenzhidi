@@ -12,9 +12,6 @@ from consts import *
 # import pytesseract
 import os 
 
-
-
-
 path = 'imgs/card_10.png'
 img = cv2.imread(path)
 
@@ -374,9 +371,6 @@ def splitKernels(path):
     
     return cropped_imgs, nums            
     
-    
-        
-
 def parseHermit(dire, path):
     
     # breakpoint()
@@ -396,17 +390,6 @@ def parseOverlook(path):
     k = parseKernelFromPath(path)
     return (CLUE_OVERLOOK, [k], dire)
     
-
-# def clueParseFunMap(clueType):
-#     m = {
-#         CLUE_BIRD: parseBird,
-#         CLUE_DRYAD: parseDrayd,
-#         CLUE_HERMIT: parseHermit,
-#         CLUE_OVERLOOK: parseOverlook,
-#     }
-    
-#     return m[clueType]
-
 def parseClue(clueType, dire, path):
     if clueType == CLUE_HERMIT:
         return parseHermit(dire, path)

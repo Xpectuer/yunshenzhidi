@@ -1,5 +1,0 @@
-'''
-Author: XPectuer
-LastEditor: XPectuer
-'''
-
