@@ -1,0 +1,7 @@
+path: ../data
+train: images
+val: images
+test: 
+
+names:
+  0: arrow
