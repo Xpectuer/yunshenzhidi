@@ -1,5 +1,5 @@
 import sys
-import cv 
+import cv
 import solver, budget
 
 def runWithCV(path='./imgs'):
